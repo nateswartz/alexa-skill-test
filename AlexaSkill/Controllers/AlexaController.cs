@@ -11,8 +11,8 @@ namespace AlexaSkill.Controllers
         [Route("api/alexa/test")]
         public AlexaResponse HelloTest(AlexaRequest request)
         {
-            var text = $"There are {GetDaysTillChristmas()} days left until Christmas. {GetChristmasGreeting()}";
-            var content = $"There are {GetDaysTillChristmas()} days left until Christmas.  {GetChristmasGreeting()}";
+            var text = $"There are {GetDaysTillChristmas()} days left until Christmas. {GetChristmasGreeting()}.";
+            var content = $"There are {GetDaysTillChristmas()} days left until Christmas.  {GetChristmasGreeting()}.";
 
             var response = new AlexaResponse(text, content);
             response.Response.Card.Title = "Christmas Countdown 🎄";
@@ -45,7 +45,9 @@ namespace AlexaSkill.Controllers
                 "Fa la la la la, la la, la, la"
             };
 
-            return greetings[new Random(DateTime.Today.Millisecond).Next(greetings.Capacity)];
+            var randomNumber = new Random(DateTime.Now.Millisecond).Next(greetings.Count - 1);
+
+            return greetings[randomNumber];
         }
     }
 }
