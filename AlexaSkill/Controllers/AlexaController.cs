@@ -9,7 +9,7 @@ namespace AlexaSkill.Controllers
     {
         [HttpPost]
         [Route("api/alexa/test")]
-        public AlexaResponse HelloTest(AlexaRequest request)
+        public AlexaResponse HelloTest([FromBody]AlexaRequest request)
         {
             if (request.Request.Type == "LaunchRequest")
             {

@@ -29,6 +29,7 @@ namespace AlexaSkill
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Info { Title = "Alexa Skill API", Version = "v1" });
+                c.CustomSchemaIds(x => x.FullName);
             });
         }
 
