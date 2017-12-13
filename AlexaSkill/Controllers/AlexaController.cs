@@ -45,7 +45,7 @@ namespace AlexaSkill.Controllers
                 "Fa la la la la, la la, la, la"
             };
 
-            var randomNumber = new Random(DateTime.Now.Millisecond).Next(greetings.Count - 1);
+            var randomNumber = new Random(DateTime.Now.Millisecond).Next(greetings.Count);
 
             return greetings[randomNumber];
         }
