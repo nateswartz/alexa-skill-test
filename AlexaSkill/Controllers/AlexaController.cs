@@ -23,7 +23,10 @@ namespace AlexaSkill.Controllers
 
         private int GetDaysTillChristmas()
         {
-            var today = DateTime.Today;
+            var utcNow = DateTime.UtcNow;
+            TimeZoneInfo easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+            DateTime today = TimeZoneInfo.ConvertTimeFromUtc(utcNow, easternZone);
+
             DateTime nextChristmas = new DateTime(today.Year, 12, 25);
 
             if (nextChristmas < today)
