@@ -1,10 +1,5 @@
-﻿HelloWorldIntent say hello
-HelloWorldIntent say hello world
-HelloWorldIntent hello
-HelloWorldIntent say hi
-HelloWorldIntent say hi world
-HelloWorldIntent hi
-HelloWorldIntent how are you
-
+﻿CountdownIntent how long until christmas
+CountdownIntent how many days until christmas
+CountdownIntent how many days til christmas
 AMAZON.HelpIntent assistance needed please
 AMAZON.HelpIntent i need assistance
