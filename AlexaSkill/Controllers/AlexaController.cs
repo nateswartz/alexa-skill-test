@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AlexaSkill.Models;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
 
 namespace AlexaSkill.Controllers
 {
@@ -6,28 +9,40 @@ namespace AlexaSkill.Controllers
     {
         [HttpPost]
         [Route("api/alexa/test")]
-        public dynamic HelloTest(dynamic request)
+        public AlexaResponse HelloTest(AlexaRequest request)
         {
-            return new
+            var text = $"There are {GetDaysTillChristmas()} days left until Christmas. {GetChristmasGreeting()}";
+            var content = $"There are {GetDaysTillChristmas()} days left until Christmas.  {GetChristmasGreeting()}";
+
+            var response = new AlexaResponse(text, content);
+            response.Response.Card.Title = "Christmas Countdown 🎄";
+            response.Response.ShouldEndSession = true;
+
+            return response;
+        }
+
+        private int GetDaysTillChristmas()
+        {
+            var today = DateTime.Today;
+            DateTime nextChristmas = new DateTime(today.Year, 12, 25);
+
+            if (nextChristmas < today)
+                nextChristmas = nextChristmas.AddYears(1);
+
+            return (nextChristmas - today).Days;
+        }
+
+        private string GetChristmasGreeting()
+        {
+            var greetings = new List<string>
             {
-                version = "1.0",
-                sessionAttributes = new { },
-                response = new
-                {
-                    outputSpeech = new
-                    {
-                        type = "PlainText",
-                        text = "Hello Swartzentrubers"
-                    },
-                    card = new
-                    {
-                        type = "Simple",
-                        title = "Hello World Test",
-                        content = "Hello\nSwartzentrubers!"
-                    },
-                    shouldEndSession = true
-                }
+                "I can't wait",
+                "Deck the Halls",
+                "Ho, ho, ho",
+                "Fa la la la la, la la, la, la"
             };
+
+            return greetings[new Random(DateTime.Today.Millisecond).Next(greetings.Capacity)];
         }
     }
 }
