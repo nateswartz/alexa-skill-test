@@ -32,7 +32,7 @@ namespace AlexaSkill.Controllers
             if (nextChristmas < today)
                 nextChristmas = nextChristmas.AddYears(1);
 
-            return (nextChristmas - today).Days;
+            return ((nextChristmas - today).Days + 1);
         }
 
         private string GetChristmasGreeting()
