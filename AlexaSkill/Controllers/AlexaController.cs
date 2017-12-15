@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AlexaSkill.Controllers
 {
@@ -31,14 +32,16 @@ namespace AlexaSkill.Controllers
         {
             if (request.Request.Intent.Name == "CountdownIntent")
             {
-                var shouldEnd = new Random(DateTime.Now.Millisecond).Next(3) != 1 ? true : false;
+                var shouldEnd = new Random(DateTime.Now.Millisecond).Next(4) != 1 ? true : false;
 
-                var text = $"There are {GetDaysTillChristmas()} days left until Christmas. {GetChristmasGreeting()}.";
-                var content = $"There are {GetDaysTillChristmas()} days left until Christmas.  {GetChristmasGreeting()}.";
+                var unit = request.Request.Intent.GetSlots().Single(s => s.Key == "Unit").Value;
+
+                var text = $"There are {GetTimeTillChristmas(unit)} left until Christmas.  {GetChristmasGreeting()}.";
+                var content = $"There are {GetTimeTillChristmas(unit)} left until Christmas.  {GetChristmasGreeting()}.";
 
                 if (!shouldEnd)
                 {
-                    text += "Are you excited?";
+                    text += " Are you excited?";
                 }
 
                 var response = new AlexaResponse(text, content);
@@ -68,7 +71,7 @@ namespace AlexaSkill.Controllers
             return new AlexaResponse("I don't know how to help with that", true);
         }
 
-        private int GetDaysTillChristmas()
+        private string GetTimeTillChristmas(string unit)
         {
             var utcNow = DateTime.UtcNow;
             TimeZoneInfo easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
@@ -79,7 +82,26 @@ namespace AlexaSkill.Controllers
             if (nextChristmas < today)
                 nextChristmas = nextChristmas.AddYears(1);
 
-            return ((nextChristmas - today).Days + 1);
+            var ts = nextChristmas.Subtract(today);
+            int value = 0;
+            switch (unit.ToLower())
+            {
+                case "hours":
+                    value = Convert.ToInt32(ts.TotalHours);
+                    break;
+                case "minutes":
+                    value = Convert.ToInt32(ts.TotalMinutes);
+                    break;
+                case "seconds":
+                    value = Convert.ToInt32(ts.Seconds);
+                    break;
+                default:
+                    value = Convert.ToInt32(ts.TotalDays) + 1;
+                    unit = "days";
+                    break;
+            }
+
+            return $"{String.Format("{0:n0}", value)} {unit}";
         }
 
         private string GetChristmasGreeting()

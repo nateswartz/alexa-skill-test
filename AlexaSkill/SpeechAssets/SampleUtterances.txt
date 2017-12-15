@@ -1,5 +1,12 @@
-﻿CountdownIntent how long until christmas
-CountdownIntent how many days until christmas
-CountdownIntent how many days til christmas
+﻿CountdownIntent how many {Unit} until christmas
+CountdownIntent how many {Unit} til christmas
+CountdownIntent how many {Unit} til it's christmas
+CountdownIntent how many {Unit} until it's christmas
+
+CountdownIntent how many {Unit} are there until christmas
+CountdownIntent how many {Unit} are there til christmas
+CountdownIntent how many {Unit} are there til it's christmas
+CountdownIntent how many {Unit} are there until it's christmas
+
 AMAZON.HelpIntent assistance needed please
 AMAZON.HelpIntent i need assistance

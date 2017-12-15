@@ -1,7 +1,13 @@
 ﻿{
   "intents": [
     {
-      "intent": "CountdownIntent"
+      "intent": "CountdownIntent",
+      "slots": [
+        {
+          "name": "Unit",
+          "type": "UNIT_OF_TIME"
+        }
+      ]
     },
     {
       "intent": "AMAZON.HelpIntent"
