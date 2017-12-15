@@ -8,5 +8,10 @@ CountdownIntent how many {Unit} are there til christmas
 CountdownIntent how many {Unit} are there til it's christmas
 CountdownIntent how many {Unit} are there until it's christmas
 
+DraftListIntent what is the current draft list at the Fridge
+DraftListIntent what beers are on tap at the Fridge
+DraftListIntent what's on tap at the Fridge
+DraftListIntent what is on tap at the Fridge
+
 AMAZON.HelpIntent assistance needed please
 AMAZON.HelpIntent i need assistance

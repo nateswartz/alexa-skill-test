@@ -1,8 +1,13 @@
 ﻿using AlexaSkill.Models;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using OpenScraping;
+using OpenScraping.Config;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Text.RegularExpressions;
 
 namespace AlexaSkill.Controllers
 {
@@ -65,6 +70,11 @@ namespace AlexaSkill.Controllers
                 response.Response.ShouldEndSession = shouldEnd;
 
                 return response;
+            }
+            else if (request.Request.Intent.Name == "DraftListIntent")
+            {
+                var result = $"Current draft list for the Fridge is {GetFridgeDraftList()}";
+                return new AlexaResponse(result, result);
             }
             else if (request.Request.Intent.Name == "AMAZON.NoIntent" && !request.Session.New)
             {
@@ -137,6 +147,32 @@ namespace AlexaSkill.Controllers
             var randomNumber = new Random(DateTime.Now.Millisecond).Next(greetings.Count);
 
             return greetings[randomNumber];
+        }
+
+        private string GetFridgeDraftList()
+        {
+            var configJson = @"
+            {
+                'beers': '//div[contains(@class, \'beer-details\')]//a'
+            }
+            ";
+
+            var config = StructuredDataConfig.ParseJsonString(configJson);
+
+            var client = new HttpClient();
+            client.BaseAddress = new Uri("https://untappd.com");
+            var response = client.GetAsync("v/the-fridge/89213").Result;
+            var content = response.Content;
+            var html = content.ReadAsStringAsync().Result;
+
+            var openScraping = new StructuredDataExtractor(config);
+            var scrapingResults = openScraping.Extract(html);
+
+            var result = JsonConvert.SerializeObject(scrapingResults, Formatting.Indented);
+            var beers = result.Split("\r\n");
+            var beerNames = beers.Where(b => Regex.Match(b, @"\d.").Success).Select(b => b.Remove(b.Length - 2).Substring(8).Trim()).ToList();
+            result = string.Join(". ", beerNames);
+            return (result);
         }
     }
 }
