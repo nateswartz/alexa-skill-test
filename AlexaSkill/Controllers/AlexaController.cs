@@ -8,6 +8,11 @@ namespace AlexaSkill.Controllers
 {
     public class AlexaController : Controller
     {
+        private List<string> knownUnits = new List<string>
+        {
+            "days", "hours", "minutes", "seconds"
+        };
+
         [HttpPost]
         [Route("api/alexa/test")]
         public AlexaResponse HelloTest([FromBody]AlexaRequest request)
@@ -32,16 +37,27 @@ namespace AlexaSkill.Controllers
         {
             if (request.Request.Intent.Name == "CountdownIntent")
             {
+                string text = "";
+                string content = "";
                 var shouldEnd = new Random(DateTime.Now.Millisecond).Next(4) != 1 ? true : false;
 
                 var unit = request.Request.Intent.GetSlots().Single(s => s.Key == "Unit").Value;
 
-                var text = $"There are {GetTimeTillChristmas(unit)} left until Christmas.  {GetChristmasGreeting()}.";
-                var content = $"There are {GetTimeTillChristmas(unit)} left until Christmas.  {GetChristmasGreeting()}.";
-
-                if (!shouldEnd)
+                if (!knownUnits.Contains(unit))
                 {
-                    text += " Are you excited?";
+                    text = $"I'm sorry, I don't know what a {unit} is.  I only know about days, hours, minutes, and seconds";
+                    content = $"I'm sorry, I don't know what a {unit} is.  I only know about days, hours, minutes, and seconds";
+                    shouldEnd = false;
+                }
+                else
+                {
+                    text = $"There are {GetTimeTillChristmas(unit)} left until Christmas.  {GetChristmasGreeting()}.";
+                    content = $"There are {GetTimeTillChristmas(unit)} left until Christmas.  {GetChristmasGreeting()}.";
+
+                    if (!shouldEnd)
+                    {
+                        text += " Are you excited?";
+                    }
                 }
 
                 var response = new AlexaResponse(text, content);
