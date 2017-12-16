@@ -73,8 +73,12 @@ namespace AlexaSkill.Controllers
             }
             else if (request.Request.Intent.Name == "DraftListIntent")
             {
-                var result = $"Current draft list for the Fridge is {GetFridgeDraftList()}";
-                return new AlexaResponse(result, result);
+                var bar = request.Request.Intent.GetSlots().Single(s => s.Key == "Bar").Value;
+
+                var response = new AlexaResponse();
+                response.Response.OutputSpeech.Type = "SSML";
+                response.Response.OutputSpeech.Ssml = $"<speak>Current draft list for the Fridge is {GetDraftListFromUntappd(bar)}</speak>";
+                return response;
             }
             else if (request.Request.Intent.Name == "AMAZON.NoIntent" && !request.Session.New)
             {
@@ -119,7 +123,7 @@ namespace AlexaSkill.Controllers
                     value = Convert.ToInt32(ts.TotalMinutes);
                     break;
                 case "seconds":
-                    value = Convert.ToInt32(ts.Seconds);
+                    value = Convert.ToInt32(ts.TotalSeconds);
                     break;
                 default:
                     value = Convert.ToInt32(ts.TotalDays) + 1;
@@ -149,8 +153,18 @@ namespace AlexaSkill.Controllers
             return greetings[randomNumber];
         }
 
-        private string GetFridgeDraftList()
+        private string GetDraftListFromUntappd(string bar)
         {
+            string url = "";
+            if (bar == "Friendly Greek")
+            {
+                url = "v/friendly-greek-bottle-shop/110232";
+            }
+            else
+            {
+                url = "v/the-fridge/89213";
+            }
+
             var configJson = @"
             {
                 'beers': '//div[contains(@class, \'beer-details\')]//a'
@@ -161,7 +175,7 @@ namespace AlexaSkill.Controllers
 
             var client = new HttpClient();
             client.BaseAddress = new Uri("https://untappd.com");
-            var response = client.GetAsync("v/the-fridge/89213").Result;
+            var response = client.GetAsync(url).Result;
             var content = response.Content;
             var html = content.ReadAsStringAsync().Result;
 
@@ -171,8 +185,9 @@ namespace AlexaSkill.Controllers
             var result = JsonConvert.SerializeObject(scrapingResults, Formatting.Indented);
             var beers = result.Split("\r\n");
             var beerNames = beers.Where(b => Regex.Match(b, @"\d.").Success).Select(b => b.Remove(b.Length - 2).Substring(8).Trim()).ToList();
-            result = string.Join(". ", beerNames);
+            result = string.Join(@" <break time=""350ms""/> ", beerNames);
             return (result);
         }
+
     }
 }

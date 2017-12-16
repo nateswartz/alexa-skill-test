@@ -10,7 +10,13 @@
       ]
     },
     {
-      "intent":  "DraftListIntent"
+      "intent": "DraftListIntent",
+      "slots": [
+        {
+          "name": "Bar",
+          "type": "LOCAL_BAR"
+        }
+      ]
     },
     {
       "intent": "AMAZON.HelpIntent"
