@@ -74,10 +74,12 @@ namespace AlexaSkill.Controllers
             else if (request.Request.Intent.Name == "DraftListIntent")
             {
                 var bar = request.Request.Intent.GetSlots().Single(s => s.Key == "Bar").Value;
-
+                var responses = GetDraftListFromUntappd(bar);
                 var response = new AlexaResponse();
                 response.Response.OutputSpeech.Type = "SSML";
-                response.Response.OutputSpeech.Ssml = $"<speak>Current draft list for the Fridge is {GetDraftListFromUntappd(bar)}</speak>";
+                response.Response.OutputSpeech.Ssml = $"<speak>Current draft list for the Fridge is {responses.outputSpeech}</speak>";
+                response.Response.Card.Title = "Draft List";
+                response.Response.Card.Content = responses.cardText;
                 return response;
             }
             else if (request.Request.Intent.Name == "AMAZON.NoIntent" && !request.Session.New)
@@ -153,16 +155,20 @@ namespace AlexaSkill.Controllers
             return greetings[randomNumber];
         }
 
-        private string GetDraftListFromUntappd(string bar)
+        private (string outputSpeech, string cardText) GetDraftListFromUntappd(string bar)
         {
             string url = "";
-            if (bar == "Friendly Greek")
+            if (bar.ToLower() == "friendly greek")
             {
                 url = "v/friendly-greek-bottle-shop/110232";
             }
-            else
+            else if (bar.ToLower() == "fridge")
             {
                 url = "v/the-fridge/89213";
+            }
+            else
+            {
+                return ("Sorry, I don't know about that bar", "Sorry, I don't know about that bar");
             }
 
             var configJson = @"
@@ -185,8 +191,9 @@ namespace AlexaSkill.Controllers
             var result = JsonConvert.SerializeObject(scrapingResults, Formatting.Indented);
             var beers = result.Split("\r\n");
             var beerNames = beers.Where(b => Regex.Match(b, @"\d.").Success).Select(b => b.Remove(b.Length - 2).Substring(8).Trim()).ToList();
-            result = string.Join(@" <break time=""350ms""/> ", beerNames);
-            return (result);
+            var speechResponse = string.Join(@" <break time=""350ms""/> ", beerNames);
+            var cardResponse = string.Join(";\n", beerNames);
+            return (speechResponse, cardResponse);
         }
 
     }
