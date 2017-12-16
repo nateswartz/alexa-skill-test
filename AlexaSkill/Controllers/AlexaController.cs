@@ -74,13 +74,9 @@ namespace AlexaSkill.Controllers
             else if (request.Request.Intent.Name == "DraftListIntent")
             {
                 var bar = request.Request.Intent.GetSlots().Single(s => s.Key == "Bar").Value;
-                var responses = GetDraftListFromUntappd(bar);
-                var response = new AlexaResponse();
-                response.Response.OutputSpeech.Type = "SSML";
-                response.Response.OutputSpeech.Ssml = $"<speak>Current draft list for the Fridge is {responses.outputSpeech}</speak>";
-                response.Response.Card.Title = "Draft List";
-                response.Response.Card.Content = responses.cardText;
-                return response;
+
+                var result = $"Current draft list for the {bar} is {GetDraftListFromUntappd(bar)}";
+                return new AlexaResponse(result, result);
             }
             else if (request.Request.Intent.Name == "AMAZON.NoIntent" && !request.Session.New)
             {
@@ -155,7 +151,7 @@ namespace AlexaSkill.Controllers
             return greetings[randomNumber];
         }
 
-        private (string outputSpeech, string cardText) GetDraftListFromUntappd(string bar)
+        private string GetDraftListFromUntappd(string bar)
         {
             string url = "";
             if (bar.ToLower() == "friendly greek")
@@ -168,7 +164,7 @@ namespace AlexaSkill.Controllers
             }
             else
             {
-                return ("Sorry, I don't know about that bar", "Sorry, I don't know about that bar");
+                return "Sorry, I don't know that bar";
             }
 
             var configJson = @"
@@ -191,10 +187,8 @@ namespace AlexaSkill.Controllers
             var result = JsonConvert.SerializeObject(scrapingResults, Formatting.Indented);
             var beers = result.Split("\r\n");
             var beerNames = beers.Where(b => Regex.Match(b, @"\d.").Success).Select(b => b.Remove(b.Length - 2).Substring(8).Trim()).ToList();
-            var speechResponse = string.Join(@" <break time=""350ms""/> ", beerNames);
-            var cardResponse = string.Join(";\n", beerNames);
-            return (speechResponse, cardResponse);
+            result = string.Join(". ", beerNames);
+            return (result);
         }
-
     }
 }
