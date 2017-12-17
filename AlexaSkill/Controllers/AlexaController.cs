@@ -188,7 +188,8 @@ namespace AlexaSkill.Controllers
 
             var configJson = @"
             {
-                'beers': '//div[contains(@class, \'beer-details\')]//a'
+                'beers': '//div[contains(@class, \'beer-details\')]//a',
+                'beerStyles': '//div[contains(@class, \'beer-details\')]//em'
             }
             ";
 
@@ -203,11 +204,29 @@ namespace AlexaSkill.Controllers
             var openScraping = new StructuredDataExtractor(config);
             var scrapingResults = openScraping.Extract(html);
 
-            var result = JsonConvert.SerializeObject(scrapingResults, Formatting.Indented);
-            var beers = result.Split("\r\n");
-            var beerNames = beers.Where(b => Regex.Match(b, @"\d.").Success).Select(b => b.Remove(b.Length - 2).Substring(8).Trim()).ToList();
-            var speechResult = string.Join(". ", beerNames);
-            var cardResult = string.Join("\n", beerNames);
+            var beersResult = JsonConvert.SerializeObject(scrapingResults["beers"], Formatting.Indented);
+            var stylesResult = JsonConvert.SerializeObject(scrapingResults["beerStyles"], Formatting.Indented);
+            var unformattedBeers = Regex.Split(beersResult, @"\d+. ");
+            var unformattedStyles = Regex.Split(stylesResult, "\r\n");
+            var unformattedStylesList = unformattedStyles.ToList();
+            unformattedStylesList.RemoveAt(unformattedStylesList.Count - 1);
+            var formattedBeers = unformattedBeers
+                                    .Skip(1)
+                                    .Select( b => b.Remove(b.Length - 7).Trim().Replace("\",\r\n  \"", " by "))
+                                    .ToList();
+            var formattedStyles = unformattedStylesList
+                                    .Skip(1)
+                                    .Select(s => s.Remove(s.Length - 2).Substring(3))
+                                    .ToList();
+
+            string speechResult = "";
+            string cardResult = "";
+            for (var i = 0; i < formattedBeers.Count; i++)
+            {
+                var beerPieces = formattedBeers[i].Split(" by ");
+                speechResult += beerPieces[0] + ", style " + formattedStyles[i] + ", by " + beerPieces[1] + ". ";
+                cardResult += beerPieces[0] + ", style " + formattedStyles[i] + ", by " + beerPieces[1] + "\n";
+            };
             return (speechResult, cardResult);
         }
     }
