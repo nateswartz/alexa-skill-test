@@ -18,6 +18,11 @@ namespace AlexaSkill.Controllers
             "days", "hours", "minutes", "seconds"
         };
 
+        private List<(string name, string speechId)> knownBars = new List<(string name, string speechId)>
+        {
+            ("The Friendly Greek", "friendly greek"), ("The Fridge", "fridge"), ("Hunger-n-Thirst", "and thirst")
+        };
+
         [HttpPost]
         [Route("api/alexa/test")]
         public AlexaResponse HelloTest([FromBody]AlexaRequest request)
@@ -42,41 +47,25 @@ namespace AlexaSkill.Controllers
         {
             if (request.Request.Intent.Name == "CountdownIntent")
             {
-                string text = "";
-                string content = "";
-                var shouldEnd = new Random(DateTime.Now.Millisecond).Next(4) != 1 ? true : false;
-
-                var unit = request.Request.Intent.GetSlots().Single(s => s.Key == "Unit").Value;
-
-                if (!knownUnits.Contains(unit))
-                {
-                    text = $"I'm sorry, I don't know what a {unit} is.  I only know about days, hours, minutes, and seconds";
-                    content = $"I'm sorry, I don't know what a {unit} is.  I only know about days, hours, minutes, and seconds";
-                    shouldEnd = false;
-                }
-                else
-                {
-                    text = $"There are {GetTimeTillChristmas(unit)} left until Christmas.  {GetChristmasGreeting()}.";
-                    content = $"There are {GetTimeTillChristmas(unit)} left until Christmas.  {GetChristmasGreeting()}.";
-
-                    if (!shouldEnd)
-                    {
-                        text += " Are you excited?";
-                    }
-                }
-
-                var response = new AlexaResponse(text, content);
-                response.Response.Card.Title = "🎄 Christmas Countdown 🎄";
-                response.Response.ShouldEndSession = shouldEnd;
-
-                return response;
+                return GetChristmasResponse(request);
             }
             else if (request.Request.Intent.Name == "DraftListIntent")
             {
+                string result = "";
+                string card = "";
                 var bar = request.Request.Intent.GetSlots().Single(s => s.Key == "Bar").Value;
-
-                var result = $"Current draft list for the {bar} is {GetDraftListFromUntappd(bar)}";
-                return new AlexaResponse(result, result);
+                if (!knownBars.Any( b => b.speechId == bar))
+                {
+                    result = "I'm sorry, I don't know that bar.";
+                    card = result;
+                }
+                else
+                {
+                    var results = GetDraftListFromUntappd(bar);
+                    result = $"Current draft list for {knownBars.First( b => b.speechId == bar).name} is {results.speechResult}";
+                    card = $"Current draft list for {knownBars.First(b => b.speechId == bar).name} is\n{results.cardResult}";
+                }
+                return new AlexaResponse(result, card);
             }
             else if (request.Request.Intent.Name == "AMAZON.NoIntent" && !request.Session.New)
             {
@@ -97,6 +86,18 @@ namespace AlexaSkill.Controllers
         private AlexaResponse DefaultResponse()
         {
             return new AlexaResponse("I don't know how to help with that", true);
+        }
+
+        private AlexaResponse GetChristmasResponse(AlexaRequest request)
+        {
+            var unit = request.Request.Intent.GetSlots().Single(s => s.Key == "Unit").Value;
+            var shouldEnd = new Random(DateTime.Now.Millisecond).Next(4) != 1 ? true : false;
+            var text = GetChristmasResponseText(unit, shouldEnd);
+
+            var response = new AlexaResponse(text, text);
+            response.Response.Card.Title = "🎄 Christmas Countdown 🎄";
+            response.Response.ShouldEndSession = shouldEnd;
+            return response;
         }
 
         private string GetTimeTillChristmas(string unit)
@@ -123,13 +124,32 @@ namespace AlexaSkill.Controllers
                 case "seconds":
                     value = Convert.ToInt32(ts.TotalSeconds);
                     break;
-                default:
+                case "days":
                     value = Convert.ToInt32(ts.TotalDays) + 1;
-                    unit = "days";
                     break;
             }
 
             return $"{String.Format("{0:n0}", value)} {unit}";
+        }
+
+        private string GetChristmasResponseText(string unit, bool shouldEnd)
+        {
+            string text = "";
+            if (!knownUnits.Contains(unit))
+            {
+                text = $"I'm sorry, I don't know what a {unit} is.  I only know about days, hours, minutes, and seconds";
+                shouldEnd = false;
+            }
+            else
+            {
+                text = $"There are {GetTimeTillChristmas(unit)} left until Christmas.  {GetChristmasGreeting()}.";
+                if (!shouldEnd)
+                {
+                    text += " Are you excited?";
+                }
+            }
+
+            return text;
         }
 
         private string GetChristmasGreeting()
@@ -151,20 +171,19 @@ namespace AlexaSkill.Controllers
             return greetings[randomNumber];
         }
 
-        private string GetDraftListFromUntappd(string bar)
+        private (string speechResult, string cardResult) GetDraftListFromUntappd(string bar)
         {
             string url = "";
-            if (bar.ToLower() == "friendly greek")
-            {
-                url = "v/friendly-greek-bottle-shop/110232";
-            }
-            else if (bar.ToLower() == "fridge")
-            {
-                url = "v/the-fridge/89213";
-            }
-            else
-            {
-                return "Sorry, I don't know that bar";
+            switch (bar.ToLower()) {
+                case "friendly greek":
+                    url = "v/friendly-greek-bottle-shop/110232";
+                    break;
+                case "fridge":
+                    url = "v/the-fridge/89213";
+                    break;
+                case "and thirst":
+                    url = "v/hunger-n-thirst/747436";
+                    break;
             }
 
             var configJson = @"
@@ -187,8 +206,9 @@ namespace AlexaSkill.Controllers
             var result = JsonConvert.SerializeObject(scrapingResults, Formatting.Indented);
             var beers = result.Split("\r\n");
             var beerNames = beers.Where(b => Regex.Match(b, @"\d.").Success).Select(b => b.Remove(b.Length - 2).Substring(8).Trim()).ToList();
-            result = string.Join(". ", beerNames);
-            return (result);
+            var speechResult = string.Join(". ", beerNames);
+            var cardResult = string.Join("\n", beerNames);
+            return (speechResult, cardResult);
         }
     }
 }
