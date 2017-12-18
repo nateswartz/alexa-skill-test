@@ -33,7 +33,7 @@ namespace AlexaSkill.Controllers
             {
                 return new ChristmasIntentHandler().HandleRequest(request);
             }
-            else if (request.Request.Intent.Name == "DraftListIntent")
+            else if (request.Request.Intent.Name == "DraftListIntent" || (request.Session.Attributes.Intent == "DraftListIntent" && request.Request.Intent.Name == "AMAZON.YesIntent"))
             {
                 return new DraftListIntentHandler().HandleRequest(request);
             }

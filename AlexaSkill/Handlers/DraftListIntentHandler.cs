@@ -21,24 +21,52 @@ namespace AlexaSkill.Handlers
         {
             string result = "";
             string card = "";
-            var bar = request.Request.Intent.GetSlots().Single(s => s.Key == "Bar").Value;
+            (string speechResult, string cardResult, int numBeers, bool hasMore) results;
+            int startingIndex = request.Session.Attributes != null ? request.Session.Attributes.LastListItem : 0;
+            var bar = request.Session.Attributes == null ?request.Request.Intent.GetSlots().Single(s => s.Key == "Bar").Value : request.Session.Attributes.Bar;
+            var formattedBar = knownBars.First(b => b.speechId.ToLower() == bar.ToLower()).name;
             if (!knownBars.Any(b => b.speechId.ToLower() == bar.ToLower()))
             {
                 result = "I'm sorry, I don't know that bar.";
                 card = result;
+                return new AlexaResponse(result, card);
             }
             else
             {
-                var results = GetDraftListFromUntappd(bar);
-                result = $"Current draft list for {knownBars.First(b => b.speechId.ToLower() == bar.ToLower()).name} is {results.speechResult}";
-                card = $"Current draft list for {knownBars.First(b => b.speechId.ToLower() == bar.ToLower()).name} is:\n{results.cardResult}";
+                results = GetDraftListFromUntappd(bar, startingIndex);
+                if (startingIndex == 0)
+                {
+                    result = $"Current draft list for {formattedBar} is {results.speechResult}";
+                    card = $"Current draft list for {formattedBar} is:\n{results.cardResult}";
+                }
+                else
+                {
+                    result = results.speechResult;
+                    card = results.cardResult;
+                }
+
             }
-            return new AlexaResponse(result, card);
+            var response = new AlexaResponse(result, card);
+            response.Session.Intent = "DraftListIntent";
+            response.Session.Bar = bar;
+            response.Session.LastListItem = (request.Session.Attributes != null ? request.Session.Attributes.LastListItem : 0) + results.numBeers;
+            if (results.hasMore)
+            {
+                response.Response.OutputSpeech.Text += " Would you like to hear more?";
+                response.Response.Card.Content += " Would you like to hear more?";
+                response.Response.ShouldEndSession = false;
+            }
+            else
+            {
+                response.Response.ShouldEndSession = true;
+            }
+            return response;
         }
 
-        private (string speechResult, string cardResult) GetDraftListFromUntappd(string bar)
+        private (string speechResult, string cardResult, int numBeers, bool hasMore) GetDraftListFromUntappd(string bar, int startingIndex = 0)
         {
             string url = "";
+            int numBeers = 0;
             switch (bar.ToLower())
             {
                 case "friendly greek":
@@ -85,14 +113,16 @@ namespace AlexaSkill.Handlers
 
             string speechResult = "";
             string cardResult = "";
-            for (var i = 0; i < formattedBeers.Count; i++)
+            int endingIndex = formattedBeers.Count > startingIndex + 5 ? startingIndex + 5 : formattedBeers.Count;
+            for (var i = startingIndex; i < endingIndex; i++)
             {
                 var beerPieces = formattedBeers[i].Split(" by ");
                 string article = StartsWithVowel(formattedStyles[i]) ? "an" : "a";
                 speechResult += beerPieces[0] + ", " + article + " " + formattedStyles[i] + ", by " + beerPieces[1] + ". ";
                 cardResult += "* " + beerPieces[0] + ", " + article + " " + formattedStyles[i] + ", by " + beerPieces[1] + "\n";
+                numBeers++;
             };
-            return (speechResult, cardResult);
+            return (speechResult, cardResult, numBeers, formattedBeers.Count > endingIndex ? true : false);
         }
 
         private bool StartsWithVowel(string input)

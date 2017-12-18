@@ -56,6 +56,15 @@ namespace AlexaSkill.Models
         {
             [JsonProperty("memberId")]
             public int MemberId { get; set; }
+
+            [JsonProperty("intent")]
+            public string Intent { get; set; }
+
+            [JsonProperty("bar")]
+            public string Bar { get; set; }
+
+            [JsonProperty("lastListItem")]
+            public int LastListItem { get; set; }
         }
 
         [JsonObject("response")]
