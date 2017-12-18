@@ -54,7 +54,7 @@ namespace AlexaSkill.Controllers
                 string result = "";
                 string card = "";
                 var bar = request.Request.Intent.GetSlots().Single(s => s.Key == "Bar").Value;
-                if (!knownBars.Any( b => b.speechId == bar))
+                if (!knownBars.Any( b => b.speechId.ToLower() == bar.ToLower()))
                 {
                     result = "I'm sorry, I don't know that bar.";
                     card = result;
@@ -62,8 +62,8 @@ namespace AlexaSkill.Controllers
                 else
                 {
                     var results = GetDraftListFromUntappd(bar);
-                    result = $"Current draft list for {knownBars.First( b => b.speechId == bar).name} is {results.speechResult}";
-                    card = $"Current draft list for {knownBars.First(b => b.speechId == bar).name} is\n{results.cardResult}";
+                    result = $"Current draft list for {knownBars.First( b => b.speechId.ToLower() == bar.ToLower()).name} is {results.speechResult}";
+                    card = $"Current draft list for {knownBars.First(b => b.speechId.ToLower() == bar.ToLower()).name} is:\n{results.cardResult}";
                 }
                 return new AlexaResponse(result, card);
             }
@@ -224,8 +224,17 @@ namespace AlexaSkill.Controllers
             for (var i = 0; i < formattedBeers.Count; i++)
             {
                 var beerPieces = formattedBeers[i].Split(" by ");
-                speechResult += beerPieces[0] + ", style " + formattedStyles[i] + ", by " + beerPieces[1] + ". ";
-                cardResult += beerPieces[0] + ", style " + formattedStyles[i] + ", by " + beerPieces[1] + "\n";
+                string article = "a";
+                if (formattedStyles[i].ToLower().StartsWith("a") ||
+                    formattedStyles[i].ToLower().StartsWith("e") ||
+                    formattedStyles[i].ToLower().StartsWith("i") ||
+                    formattedStyles[i].ToLower().StartsWith("o") ||
+                    formattedStyles[i].ToLower().StartsWith("u"))
+                {
+                    article = "an";
+                }
+                speechResult += beerPieces[0] + ", " + article + " " + formattedStyles[i] + ", by " + beerPieces[1] + ". ";
+                cardResult += "* " + beerPieces[0] + ", " + article + " " + formattedStyles[i] + ", by " + beerPieces[1] + "\n";
             };
             return (speechResult, cardResult);
         }
