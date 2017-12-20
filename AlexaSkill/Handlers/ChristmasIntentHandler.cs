@@ -14,6 +14,15 @@ namespace AlexaSkill.Handlers
 
         public AlexaResponse HandleRequest(AlexaRequest request)
         {
+            if (request.Request.Intent.Name == "AMAZON.NoIntent" && !request.Session.New)
+            {
+                return new AlexaResponse("Fine, you don't have to be such a grinch.", true);
+            }
+            else if (request.Request.Intent.Name == "AMAZON.YesIntent" && !request.Session.New)
+            {
+                return new AlexaResponse("Good, I'm glad you're in the Christmas spirit.", true);
+            }
+
             var unit = request.Request.Intent.GetSlots().Single(s => s.Key == "Unit").Value;
             var shouldEnd = new Random(DateTime.Now.Millisecond).Next(4) != 1 ? true : false;
             var text = GetChristmasResponseText(unit, shouldEnd);
@@ -21,6 +30,10 @@ namespace AlexaSkill.Handlers
             var response = new AlexaResponse(text, text);
             response.Response.Card.Title = "🎄 Christmas Countdown 🎄";
             response.Response.ShouldEndSession = shouldEnd;
+            if (!shouldEnd)
+            {
+                response.Session.Intent = "CountdownIntent";
+            }
             return response;
         }
 

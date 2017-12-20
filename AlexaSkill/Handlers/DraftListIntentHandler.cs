@@ -19,6 +19,11 @@ namespace AlexaSkill.Handlers
 
         public AlexaResponse HandleRequest(AlexaRequest request)
         {
+            if (request.Request.Intent.Name == "AMAZON.NoIntent")
+            {
+                return new AlexaResponse("Okay, goodbye");
+            }
+
             string result = "";
             string card = "";
             (string speechResult, string cardResult, int numBeers, bool hasMore) results;
@@ -100,13 +105,12 @@ namespace AlexaSkill.Handlers
             var beersString = JsonConvert.SerializeObject(scrapingResults["beers"], Formatting.Indented);
             var stylesString = JsonConvert.SerializeObject(scrapingResults["beerStyles"], Formatting.Indented);
 
+            beersString = Regex.Replace(beersString, "\\[\r\n  \"\\d+. ", "").Replace("\"\r\n]", "");
             var beersList = Regex.Split(beersString, "\",\r\n  \"\\d+. ");
-            beersList[0] = Regex.Replace(beersList[0], "\\[\r\n  \"\\d+. ", "");
-            beersList[beersList.Length - 1] = beersList[beersList.Length - 1].Replace("\"\r\n]", "");
 
+            stylesString = Regex.Replace(stylesString, "\\[\r\n  \"", "").Replace("\"\r\n]", "");
+            stylesString = stylesString.Replace("IPA", "I.P.A.");
             var stylesList = Regex.Split(stylesString, "\",\r\n  \"");
-            stylesList[0] = stylesList[0].Replace("[\r\n  \"", "");
-            stylesList[beersList.Length - 1] = stylesList[stylesList.Length - 1].Replace("\"\r\n]", "");
 
             string speechResult = "";
             string cardResult = "";

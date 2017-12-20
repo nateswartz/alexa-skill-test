@@ -29,21 +29,15 @@ namespace AlexaSkill.Controllers
 
         private AlexaResponse HandleIntentRequest(AlexaRequest request)
         {
-            if (request.Request.Intent.Name == "CountdownIntent")
+            if (request.Request.Intent.Name == "CountdownIntent" || 
+                (request.Session.Attributes != null && request.Session.Attributes.Intent == "CountdownIntent"))
             {
                 return new ChristmasIntentHandler().HandleRequest(request);
             }
-            else if (request.Request.Intent.Name == "DraftListIntent" || (request.Session.Attributes.Intent == "DraftListIntent" && request.Request.Intent.Name == "AMAZON.YesIntent"))
+            else if (request.Request.Intent.Name == "DraftListIntent" ||
+                (request.Session.Attributes != null && request.Session.Attributes.Intent == "DraftListIntent"))
             {
                 return new DraftListIntentHandler().HandleRequest(request);
-            }
-            else if (request.Request.Intent.Name == "AMAZON.NoIntent" && !request.Session.New)
-            {
-                return new AlexaResponse("Fine, you don't have to be such a grinch.", true);
-            }
-            else if (request.Request.Intent.Name == "AMAZON.YesIntent" && !request.Session.New)
-            {
-                return new AlexaResponse("Good, I'm glad you're in the Christmas spirit.", true);
             }
             return DefaultResponse();
         }
