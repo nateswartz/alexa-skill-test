@@ -68,7 +68,7 @@ namespace AlexaSkill.Handlers
             return response;
         }
 
-        private (string speechResult, string cardResult, int numBeers, bool hasMore) GetDraftListFromUntappd(string bar, int startingIndex = 0)
+        public (string speechResult, string cardResult, int numBeers, bool hasMore) GetDraftListFromUntappd(string bar, int startingIndex = 0)
         {
             string url = "";
             int numBeers = 0;
@@ -85,6 +85,24 @@ namespace AlexaSkill.Handlers
                     break;
             }
 
+            (var beersList, var stylesList) = GetBeersAndStyles(url);
+
+            string speechResult = "";
+            string cardResult = "";
+            int endingIndex = beersList.Count > startingIndex + 5 ? startingIndex + 5 : beersList.Count;
+            for (var i = startingIndex; i < endingIndex; i++)
+            {
+                var beerPieces = beersList[i].Split("\",\r\n  \"");
+                string article = StartsWithVowel(stylesList[i]) ? "an" : "a";
+                speechResult += beerPieces[0] + ", " + article + " " + stylesList[i] + ", by " + beerPieces[1] + ". ";
+                cardResult += "* " + beerPieces[0] + ", " + article + " " + stylesList[i] + ", by " + beerPieces[1] + "\n";
+                numBeers++;
+            };
+            return (speechResult, cardResult, numBeers, beersList.Count > endingIndex ? true : false);
+        }
+
+        private (List<string> beersCollection, List<string> stylesCollection) GetBeersAndStyles(string url)
+        {
             var configJson = @"
             {
                 'beers': '//div[contains(@class, \'beer-details\')]//a',
@@ -112,18 +130,7 @@ namespace AlexaSkill.Handlers
             stylesString = stylesString.Replace("IPA", "I.P.A.");
             var stylesList = Regex.Split(stylesString, "\",\r\n  \"");
 
-            string speechResult = "";
-            string cardResult = "";
-            int endingIndex = beersList.Length > startingIndex + 5 ? startingIndex + 5 : beersList.Length;
-            for (var i = startingIndex; i < endingIndex; i++)
-            {
-                var beerPieces = beersList[i].Split("\",\r\n  \"");
-                string article = StartsWithVowel(stylesList[i]) ? "an" : "a";
-                speechResult += beerPieces[0] + ", " + article + " " + stylesList[i] + ", by " + beerPieces[1] + ". ";
-                cardResult += "* " + beerPieces[0] + ", " + article + " " + stylesList[i] + ", by " + beerPieces[1] + "\n";
-                numBeers++;
-            };
-            return (speechResult, cardResult, numBeers, beersList.Length > endingIndex ? true : false);
+            return (beersList.ToList(), stylesList.ToList());
         }
 
         private bool StartsWithVowel(string input)
